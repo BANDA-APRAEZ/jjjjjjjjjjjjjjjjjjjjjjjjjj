@@ -1,0 +1,352 @@
+<!DOCTYPE html> 
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Por un Futuro Limpio: Quebrada Las Abras</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Comic Sans MS', cursive, sans-serif; background-color: #e0f2e9; color: #2c3e50; }
+
+    .inicio {
+    position: relative; 
+    color: black;
+    text-align: center;
+    padding: 400px 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .inicio::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('IMG/INICIO.jpg') no-repeat center center fixed;
+    background-size: cover; 
+    opacity: 60%;
+    z-index: -1; 
+  }
+    
+    /* Menú de navegación */
+    nav {
+      background: #1e5631; color: white;
+      padding: 20px 30px; display: flex;
+      justify-content: space-between; align-items: center;
+      position: fixed; width: 100%; top: 0; left: 0;
+      z-index: 1000;
+      font-size: 18px;
+    }
+    nav ul { list-style: none; display: flex; gap: 15px; }
+    nav ul li { display: inline; }
+    nav ul li a { color: white; text-decoration: none; padding: 8px 12px; }
+    nav ul li a:hover { background: #3a5a40; border-radius: 5px; }
+    
+    /* Contenedor principal */
+    .container { width: 90%; max-width: 1200px; margin: 80px auto 20px; }
+    #map { height: 600px; margin-bottom: 20px; border: 2px solid #2c6e49; border-radius: 10px; }
+    .gallery img { width: 375px; margin: 10px; border-radius: 10px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: #d9f2d9; }
+    th, td { border: 1px solid #2c6e49; padding: 10px; text-align: center; }
+    .message { background: #a3d9a5; padding: 15px; border-radius: 10px; text-align: center; }
+    button { background: #1e5631; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #3a5a40; }
+    
+    textarea {
+    width: 100%; /* Asegura que el textarea ocupe todo el ancho disponible */
+    padding: 10px; /* Espaciado interno */
+    border: 1px solid #2c6e49; /* Borde del textarea */
+    border-radius: 5px; /* Bordes redondeados */
+    margin-bottom: 10px; /* Espacio debajo del textarea */
+    resize: vertical; /* Permite redimensionar verticalmente */
+  }
+
+  input[type="text"] {
+    width: 100%; /* Asegura que el input ocupe todo el ancho disponible */
+    padding: 10px; /* Espaciado interno */
+    border: 1px solid #2c6e49; /* Borde del input */
+    border-radius: 5px; /* Bordes redondeados */
+    margin-bottom: 10px; /* Espacio debajo del input */
+  }
+
+  form {
+    background: #d9f2d9; /* Fondo del formulario */
+    padding: 15px; /* Espaciado interno */
+    border-radius: 10px; /* Bordes redondeados */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Sombra para dar profundidad */
+  }
+
+  h2 {
+    margin-bottom: 15px; /* Espacio debajo de los encabezados */
+  }
+
+    /* Contenedor del mapa y la lista */
+    .map-container {
+      display: flex; 
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    #map { 
+      height: 600px; 
+      flex: 3; /* Ocupa más espacio */
+      border: 3px solid #3b5d3b; border-radius: 10px; 
+    }
+
+    /* Panel lateral de lista */
+    .sidebar {
+      flex: 1; /* Menos espacio */
+      background: #2c3e50; color: white;
+      padding: 15px; border-radius: 10px;
+      max-width: 300px;
+    }
+    .sidebar h3 { margin-bottom: 10px; text-align: center; }
+    .punto {
+      background: #3b5d3b; margin: 5px 0; padding: 8px;
+      border-radius: 5px; cursor: pointer; text-align: center;
+    }
+    .punto:hover { background: #2a472a; }
+
+    /* Para móviles */
+    @media (max-width: 768px) {
+      .map-container {
+        flex-direction: column;
+      }
+      #map {
+        height: 400px;
+      }
+    }
+  </style>
+</head>
+<body>
+    
+  <nav>
+    <div class="logo">Por un Futuro Limpio: Quebrada Las Abras</div>
+    <ul>
+      <li><a href="#map">Mapa</a></li>
+      <li><a href="#Parametros">Parámetros</a></li>
+      <li><a href="#sensors">Sensores</a></li>
+      <li><a href="#alertas">Alertas</a></li>
+      <li><a href="#comments">Comentarios</a></li>
+    </ul>
+  </nav>
+  <br>
+  
+  <div class="inicio">
+    <h1>Por un Futuro Limpio: Quebrada Las Abras</h1>
+  </div>
+
+  <div class="container">
+    <h2>Mapa de Sensores</h2>
+    <div class="map-container">
+      <div id="map"></div>
+      <div class="sidebar">
+        <h3>Lista de Sensores</h3>
+        <div id="listaPuntos"></div>
+      </div>
+    </div>
+
+    <br>
+    <h2>Parámetros Físicos y Químicos</h2>
+    <div class="parametros-container" id="Parametros" style="display: flex; gap: 20px;">
+      <!-- Cuadro de Parámetros Físicos -->
+      <div style="flex: 1; border: 1px solid #000; padding: 10px;">
+        <h3>Parámetros Físicos</h3>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div style="border: 1px solid #ccc; padding: 10px; display: flex; align-items: center; gap: 10px;">
+            <img src="IMG/pf1.png" alt="Icono Turbidez" width="20">
+            <span>Turbidez (NTU):</span>
+            <span style="font-size: 24px; font-weight: bold;">1.0</span>
+            <span style="font-size: 14px; color: gray;">NTU</span>
+          </div>
+          <div style="border: 1px solid #ccc; padding: 10px; display: flex; align-items: center; gap: 10px;">
+            <img src="IMG/pf2.png" alt="Icono Turbidez" width="20">
+            <span>Color:</span>
+            <span style="font-size: 24px; font-weight: bold;">1.0</span>
+            <span style="font-size: 14px; color: gray;">NTU</span>
+          </div>
+          <div style="border: 1px solid #ccc; padding: 10px; display: flex; align-items: center; gap: 10px;">
+            <img src="IMG/pf3.png" alt="Icono Turbidez" width="20">
+            <span>Conductividad:</span>
+            <span style="font-size: 24px; font-weight: bold;">1.0</span>
+            <span style="font-size: 14px; color: gray;">NTU</span>
+          </div>
+          <div style="border: 1px solid #ccc; padding: 10px; display: flex; align-items: center; gap: 10px;">
+            <img src="IMG/pf4.png" alt="Icono Temperatura" width="20">
+            <span>Temperatura (°C):</span>
+            <span style="font-size: 24px; font-weight: bold;">25</span>
+            <span style="font-size: 14px; color: gray;">°C</span>
+          </div>
+          <div style="border: 1px solid #ccc; padding: 10px; display: flex; align-items: center; gap: 10px;">
+            <img src="IMG/pf5.png" alt="Icono pH" width="20">
+            <span>Sólidos Suspendidos:</span>
+            <span style="font-size: 24px; font-weight: bold;">7.2</span>
+            <span style="font-size: 14px; color: gray;"></span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Cuadro de Parámetros Químicos -->
+      <div style="flex: 1; border: 1px solid #000; padding: 10px;">
+        <h3>Parámetros Químicos</h3>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div style="border: 1px solid #ccc; padding: 10px; display: flex; align-items: center; gap: 10px;">
+            <img src="IMG/pq1.png" alt="Icono Oxígeno" width="20">
+            <span>pH:</span>
+            <span style="font-size: 24px; font-weight: bold;">8.0</span>
+            <span style="font-size: 14px; color: gray;">mg/L</span>
+          </div>
+          <div style="border: 1px solid #ccc; padding: 10px; display: flex; align-items: center; gap: 10px;">
+            <img src="IMG/pq2.png" alt="Icono Fosfatos" width="20">
+            <span>Alcalinidad:</span>
+            <span style="font-size: 24px; font-weight: bold;">0.1</span>
+            <span style="font-size: 14px; color: gray;">mg/L</span>
+          </div>
+          <div style="border: 1px solid #ccc; padding: 10px; display: flex; align-items: center; gap: 10px;">
+            <img src="IMG/pq3.png" alt="Icono Fosfatos" width="20">
+            <span>Fosfatos (mg/L):</span>
+            <span style="font-size: 24px; font-weight: bold;">0.1</span>
+            <span style="font-size: 14px; color: gray;">mg/L</span>
+          </div>
+          <div style="border: 1px solid #ccc; padding: 10px; display: flex; align-items: center; gap: 10px;">
+            <img src="IMG/pq4.png" alt="Icono Nitratos" width="20">
+            <span>Nitratos (mg/L):</span>
+            <span style="font-size: 24px; font-weight: bold;">0.5</span>
+            <span style="font-size: 14px; color: gray;">mg/L</span>
+          </div>
+          <div style="border: 1px solid #ccc; padding: 10px; display: flex; align-items: center; gap: 10px;">
+            <img src="IMG/pf2.png" alt="Icono Oxígeno" width="20">
+            <span>Oxígeno Disuelto (mg/L):</span>
+            <span style="font-size: 24px; font-weight: bold;">8.0</span>
+            <span style="font-size: 14px; color: gray;">mg/L</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    
+    <br>
+    <br>
+    <h2 id="sensors">Estados del Agua</h2>
+    <table>
+      <tr><th>Tipo</th><th>Parámetros</th><th>Valor</th><th>Estado</th></tr>
+      <tr><td>Físico</td><td>Turbidez</td><td>13.8</td><td>Normal</td></tr>
+      <tr><td>Físico</td><td>Color</td><td>23.6</td><td>Aceptable</td></tr>
+      <tr><td>Físico</td><td>Conductividad</td><td>293.1</td><td>Elevado</td></tr>
+      <tr><td>Químico</td><td>pH</td><td>10.0</td><td>Normal</td></tr>
+      <tr><td>Químico</td><td>Alcalinidad</td><td>123.3</td><td>Normal</td></tr>
+    </table>
+
+    <!-- Sección de Imágenes -->
+<h2 id="gallery">Imágenes de la Quebrada</h2>
+<div class="gallery" style="display: flex; gap: 20px;">
+  <div style="border: 1px solid #ccc; padding: 10px; text-align: center; position: relative;">
+    <h3>Zona 1</h3>
+    <img src="IMG/I1.jpg" alt="Cascada 1" height="250px">
+    <h5 style="position: absolute; top: 10px; right: 10px; color: rgb(239, 39, 39); font-weight: bold;">EN VIVO</h5>
+  </div>
+  <div style="border: 1px solid #ccc; padding: 10px; text-align: center; position: relative;">
+    <h3>Zona 2</h3>
+    <img src="IMG/I2.jpg" alt="Cascada 2" height="250px">
+    <h5 style="position: absolute; top: 10px; right: 10px; color: red; font-weight: bold;">EN VIVO</h5>
+  </div>
+  <div style="border: 1px solid #ccc; padding: 10px; text-align: center; position: relative;">
+    <h3>Zona 3</h3>
+    <img src="IMG/I3.jpg" alt="Cascada 3" height="250px">
+    <h5 style="position: absolute; top: 10px; right: 10px; color: red; font-weight: bold;">EN VIVO</h5>
+  </div>
+</div>
+
+    <br>
+    <!-- Cuadro de Alerta -->
+    <div id="alertas" style="border: 2px solid red; padding: 15px; margin-top: 20px; background-color: #ffe6e6;">
+      <h3 style="color: red;">Alerta</h3>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="border: 1px solid #ccc; padding: 10px;">
+          <b>Alerta de Calidad del Agua</b>
+          <p>¡Alerta! Turbidez alta: 9 NTU</p>
+        </div>
+        <div style="border: 1px solid #ccc; padding: 10px;">
+          <b>Alerta de Calidad del Agua</b>
+          <p>¡Alerta! pH fuera de rango: 6.4</p>
+        </div>
+        <div style="border: 1px solid #ccc; padding: 10px;">
+          <b>Alerta de Calidad del Agua</b>
+          <p>¡Alerta! Turbidez alta: 8.1 NTU</p>
+        </div>
+        <div style="border: 1px solid #ccc; padding: 10px;">
+          <b>Alerta de Calidad del Agua</b>
+          <p>¡Alerta! pH fuera de rango: 6.3</p>
+        </div>
+        <div style="border: 1px solid #ccc; padding: 10px;">
+          <b>Alerta de Calidad del Agua</b>
+          <p>¡Alerta! Turbidez alta: 9.2 NTU</p>
+        </div>
+      </div>
+    </div>
+
+    <br>
+    <br>
+    <h2 id="comments">Comentarios</h2>
+    <form>
+        <textarea rows="4" placeholder="Escribe tu comentario..."></textarea>
+        <button type="submit">Enviar</button>
+    </form>
+    
+    
+    <br>
+    <br>
+    <div class="message">
+      <h3>Concientización</h3>
+      <p>El reciclaje ayuda a reducir la contaminación. ¡Participa activamente!</p>
+    </div>
+  </div>
+  
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([-1.646216, -78.646404], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 100 }).addTo(map);
+    L.marker([-1.646216, -78.646404]).addTo(map).bindPopup("Quebrada Las Abras");
+
+    // Ícono personalizado
+    const recolectorIcon = L.icon({
+      iconUrl: 'IMG/icono.png', // Cambia por tu imagen personalizada
+      iconSize: [40, 40],
+      iconAnchor: [20, 40],
+      popupAnchor: [0, -35]
+    });
+
+    // Lista de puntos de recolección
+    const puntos = [
+      { nombre: "Sensor 1", coords: [-1.649186, -78.643912] },
+      { nombre: "Sensor 2", coords: [-1.648062, -78.644978] },
+      { nombre: "Sensor 3", coords: [-1.647005, -78.645842] },
+      { nombre: "Sensor 4", coords: [-1.646468, -78.646262] }
+    ];
+
+    // Agregar marcadores y lista
+    const listaPuntos = document.getElementById("listaPuntos");
+
+    puntos.forEach(punto => {
+      const marker = L.marker(punto.coords, { icon: recolectorIcon })
+        .addTo(map)
+        .bindPopup(`<b>${punto.nombre}</b>`);
+
+      const item = document.createElement("div");
+      item.classList.add("punto");
+      item.innerHTML = `<b>${punto.nombre}</b>`;
+      item.onclick = () => {
+        map.setView(punto.coords, 16);
+        marker.openPopup();
+      };
+
+      listaPuntos.appendChild(item);
+    });
+  </script>
+</body>
+</html>
